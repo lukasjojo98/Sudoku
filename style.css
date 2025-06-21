@@ -27,7 +27,6 @@
         }
         .field-item:hover {
             cursor: pointer;
-            /* background-color: beige; */
         }
         .active-field-item {
             background-color: beige;
@@ -97,8 +96,6 @@
             flex-direction: row;
             justify-content: start;
             gap: 20px;
-        }
-        .candidates-row-item {
         }
         .row-item-no-display {
             display: hidden;

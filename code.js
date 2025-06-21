@@ -12,6 +12,7 @@ let enteredWord = "";
 let wordToGuess = "";
 let isWordGuessed = false;
 let isNumbers = true;
+let errors = 0;
 
 function createMap(board) {
     const container = document.querySelector('.board-container');
@@ -116,10 +117,22 @@ function visualizeCorresponding(element) {
 function fillQuadrant(rowMin, rowMax, colMin, colMax) {
      for(let i = rowMin; i < rowMax + 1; i++){
         for(let j = colMin; j < colMax + 1; j++){
-        const rowElement = document.getElementById(i + "," + j);
-        rowElement.classList.add('active-field-item');
+            const rowElement = document.getElementById(i + "," + j);
+            rowElement.classList.add('active-field-item');
         }
     }
+}
+
+function checkQuadrantForError(rowMin, rowMax, colMin, colMax, numberValue) {
+     for(let i = rowMin; i < rowMax + 1; i++){
+        for(let j = colMin; j < colMax + 1; j++){
+            const rowElement = document.getElementById(i + "," + j);
+            if (rowElement.innerHTML == numberValue && (i != currentRow && j != currentCol)){
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 function processKeypress(key) {
@@ -142,19 +155,97 @@ function processKeypress(key) {
     }
 }
 
+function checkForError() {
+    const errorDisplay = document.getElementById('error-display');
+    const element = document.getElementById(currentRow + "," + currentCol);
+    const [row, col] = element.id.split(",");
+    const value = element.innerHTML;
+    for(let i = 0; i < COL_COUNT; i++){
+        const rowElement = document.getElementById(row + "," + i);
+        const colElement = document.getElementById(i + "," + col);
+        if((rowElement.innerHTML == value && element != rowElement || colElement.innerHTML == value && colElement != element)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+     if(row < 3 && col < 3){
+        if(checkQuadrantForError(0, 2, 0, 2, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 2 && row < 6) && (col < 3)) {
+        if(checkQuadrantForError(3, 5, 0, 2, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 5 && row < 9) && (col < 3)) {
+        if(checkQuadrantForError(6, 8, 0, 2, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if(row < 3 && (col > 2 && col < 6)){
+        if(checkQuadrantForError(0, 2, 3, 5, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 2 && row < 6) && (col > 2 && col < 6)) {
+        if(checkQuadrantForError(3, 5, 3, 5, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 5 && row < 9) && (col > 2 && col < 6)) {
+        if(checkQuadrantForError(6, 8, 3, 5, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if(row < 3 && (col > 5 && col < 9)){
+        if(checkQuadrantForError(0, 2, 6, 8, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 2 && row < 6) && (col > 5 && col < 9)) {
+        if(checkQuadrantForError(3, 5, 6, 8, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+    if((row > 5 && row < 9) && (col > 5 && col < 9)) {
+        if(checkQuadrantForError(6, 8, 6, 8, value)){
+            errors++;
+            errorDisplay.innerHTML = "Error: " + errors;
+            return;
+        }
+    }
+}
+
 function addNumber(numberValue) {
     const element = document.getElementById(currentRow + "," + currentCol);
     element.innerHTML = numberValue;
-}
-
-function addCandidate() {
-
+    if(isNumbers){
+        checkForError();
+    }
 }
 
 async function readFromJSON() {
     fetch('boards.json')
     .then(response => response.json())
-    .then(json => createMap(json["RawSudoku"][0]))
+    .then(json => createMap(json["RawSudoku"][Math.floor(Math.random() * json["RawSudoku"].length)]));
 }
 
 function changeNumbersContainer() {
@@ -206,6 +297,11 @@ function setNumbersContainer() {
     } 
 }
 
+function removeCurrentSelection() {
+    const element = document.getElementById(currentRow + "," + currentCol);
+    element.innerHTML = "";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     interval = setInterval(() => {
         seconds++;
@@ -219,9 +315,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
     setNumbersContainer();
     readFromJSON();
-    // createMap();
 });
 
 document.getElementById("change-button").addEventListener("click", () => {
     changeNumbersContainer();
+});
+
+document.addEventListener("keydown", (event) => {
+    if(event.key === 'Backspace'){
+        removeCurrentSelection();
+    }
 });
