@@ -4,6 +4,8 @@ let currentRow = 0;
 let currentCol = 0;
 let isEntered = false;
 let interval;
+let minutes = 0;
+let seconds = 0;
 let isAnimationDone = true;
 let correctLetters = 0;
 let enteredWord = "";
@@ -11,14 +13,8 @@ let wordToGuess = "";
 let isWordGuessed = false;
 let isNumbers = true;
 
-const firstRow = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
-const secondRow = ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
-const thirdRow = ["Enter", "Z", "X", "C", "V", "B", "U", "N", "M", "Delete"];
-const rowItems = [firstRow, secondRow, thirdRow];
-
-function createMap() {
+function createMap(board) {
     const container = document.querySelector('.board-container');
-
     for(let i = 0; i < ROW_COUNT; i++){
         const rowContainer = document.createElement('div');
         rowContainer.classList.add('row-item');
@@ -52,6 +48,9 @@ function createMap() {
             fieldItem.id = `${i},${j}`;
             fieldItem.classList.add('field-item');
             fieldItem.classList.add('matrix-default-border');
+            if(board[i][j] !== 0) {
+                fieldItem.innerHTML = board[i][j];
+            }
             fieldItem.addEventListener("click", () => {
                 try {
                     document.querySelector('.clicked-field-item').classList.remove('clicked-field-item');
@@ -152,6 +151,12 @@ function addCandidate() {
 
 }
 
+async function readFromJSON() {
+    fetch('boards.json')
+    .then(response => response.json())
+    .then(json => createMap(json["RawSudoku"][0]))
+}
+
 function changeNumbersContainer() {
     const candidateElements = document.querySelectorAll('.candidate-item');
     if(!isNumbers){
@@ -202,17 +207,19 @@ function setNumbersContainer() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setNumbersContainer();
-    createMap();
-});
-
-document.addEventListener("keydown", (event) => {
-    if(isAnimationDone && !isWordGuessed){
-        if(event.key === 'Backspace'){
-            removeLetter();
+    interval = setInterval(() => {
+        seconds++;
+        if(seconds == 60){
+            minutes++;
+            seconds = 0;
         }
-        processKeypress(event.key);
-    }
+        const zeroPad = (num, places) => String(num).padStart(places, '0')
+        const formattedTime = `${zeroPad(minutes, 2)}:${zeroPad(seconds, 2)}`;
+        document.getElementById('timer').innerHTML = `Timer: ${formattedTime}`;
+    }, 1000);
+    setNumbersContainer();
+    readFromJSON();
+    // createMap();
 });
 
 document.getElementById("change-button").addEventListener("click", () => {
